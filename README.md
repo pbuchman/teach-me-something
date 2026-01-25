@@ -10,10 +10,14 @@ This repository is a growing collection of tech insights captured during coding 
 
 This repo is populated by a **Claude Code skill** — a reusable prompt that extends Claude Code's capabilities. When you type `/teach-me-something` in Claude Code, it:
 
-1. Picks an interesting topic from your recent conversation (or searches for trending tech)
-2. Presents the insight in a structured format
-3. Logs it to this repo as a markdown file
-4. Commits and pushes automatically
+1. **Checks for duplicates** — Lists recent files to avoid teaching the same topic twice
+2. **Picks a topic** from:
+   - Your explicit request (`/teach-me-something [topic]`)
+   - Recent conversation context (patterns, architecture decisions)
+   - [Threads ClaudeCode community](https://www.threads.com/search?q=ClaudeCode) for trending tips
+3. **Presents the insight** in a structured format
+4. **Logs it here** as a markdown file (background agent)
+5. **Commits and pushes** automatically
 
 ### What are Claude Code Skills?
 
@@ -42,27 +46,50 @@ Share an interesting tech insight and log it for future reference.
 
 **Usage:**
 
-- `/teach-me-something` — pick topic from recent context or trending tech
-- `/teach-me-something [topic]` — teach about specific topic (e.g., `/teach-me-something token exchange`)
+- `/teach-me-something` — pick topic from recent context or Threads/ClaudeCode community
+- `/teach-me-something [topic]` — teach about specific topic
 
-## Step 1: Choose a Topic
+---
+
+## Step 1: Check for Duplicates
+
+**MANDATORY:** Before selecting a topic, check existing insights to avoid duplicates:
+
+```bash
+ls -t ~/personal/teach-me-something/*.md | head -20
+```
+
+Note the recent topics from filenames (format: `YYYY-MM-DD-topic-slug.md`). Do NOT teach about topics already covered.
+
+---
+
+## Step 2: Choose a Topic
 
 **Priority order:**
 
 1. If user provided a topic argument → teach about that (use WebSearch if needed for depth)
 2. If interesting patterns, architecture decisions, or techniques were discussed recently → teach about that
-3. Otherwise → use WebSearch for trending tech/AI topics (current year)
+3. Otherwise → search for trending ClaudeCode topics:
 
-Prioritize topics that are:
+**ClaudeCode Community Search:**
 
-- Practical and applicable
-- Not too basic (assume intermediate developer knowledge)
-- Related to: distributed systems, cloud architecture, TypeScript/Node.js, AI/ML, DevOps, security
+```
+WebFetch: https://www.threads.com/search?q=ClaudeCode&serp_type=default
+Prompt: "Extract the most interesting technical insights, tips, or discoveries about Claude Code from the last few posts. Focus on practical techniques, workflows, or features. List 3-5 topics with brief descriptions."
+```
 
-## Step 2: Teach (Immediate)
+Then pick the most interesting topic that:
+- Is NOT already in `~/personal/teach-me-something/`
+- Is practical and applicable
+- Relates to: AI coding assistants, prompt engineering, developer workflows, TypeScript/Node.js
+
+---
+
+## Step 3: Teach (Immediate)
 
 Present the insight directly in chat using this format:
 
+```
 ★ Insight ─────────────────────────────────────
 **[Topic Title]**
 
@@ -72,14 +99,18 @@ Sources:
 - [Source Title 1](url)
 - [Source Title 2](url)
 ─────────────────────────────────────────────────
+```
 
 If teaching from recent context, no web sources needed.
 If teaching from web search, include 1-3 relevant sources.
 
-## Step 3: Log to Repository (Background)
+---
+
+## Step 4: Log to Repository (Background)
 
 After presenting the insight, spawn a background agent using the Task tool:
 
+```
 Task tool parameters:
 - subagent_type: "general-purpose"
 - run_in_background: true
@@ -88,7 +119,7 @@ Task tool parameters:
 
     Topic: [TOPIC_TITLE]
     Context: [BRIEF_DESCRIPTION_OF_WHAT_USER_WAS_BUILDING - 1-2 sentences]
-    Content: [FULL_EXPLANATION_FROM_STEP_2]
+    Content: [FULL_EXPLANATION_FROM_STEP_3]
     Sources: [LIST_OF_SOURCES_IF_ANY]
 
     Steps:
@@ -118,8 +149,22 @@ Task tool parameters:
        git add .
        git commit -m "Add: [topic-slug]"
        git push
+```
 
 Do NOT wait for the background task to complete. Continue conversation immediately after spawning.
+
+---
+
+## Step 5: Suggest Next Steps
+
+After presenting the insight:
+
+```
+💡 **Related Explorations:**
+- [Related topic 1 to explore next]
+- [Related topic 2 to explore next]
+- [How this applies to current work]
+```
 ```
 
 ### Step 2: Clone This Repo
@@ -146,11 +191,23 @@ Or with a specific topic:
 
 ---
 
+## Topic Discovery
+
+When no specific topic is requested and recent context isn't interesting, the skill searches **Threads** for ClaudeCode community discussions:
+
+```
+https://www.threads.com/search?q=ClaudeCode&serp_type=default
+```
+
+This surfaces trending tips, workflows, and discoveries from the Claude Code community — keeping your knowledge base current with real-world usage patterns.
+
+---
+
 ## Customization
 
 ### Change the Storage Location
 
-Update the path in Step 3 of the skill to point to your preferred location:
+Update the path in Step 4 of the skill to point to your preferred location:
 
 ```markdown
 1. Create file: /path/to/your/knowledge-base/YYYY-MM-DD-[topic-slug].md
@@ -163,19 +220,6 @@ You can extend the skill to organize by category:
 ```markdown
 1. Create file: ~/personal/teach-me-something/[category]/YYYY-MM-DD-[topic-slug].md
    - Categories: distributed-systems, typescript, devops, ai-ml, security
-```
-
-### Integrate with Memory Systems
-
-The skill can integrate with [claude-mem](https://github.com/anthropics/claude-mem) for AI-accessible memory. Add this for richer cross-session recall:
-
-```markdown
-## Optional: Persist to Memory
-
-Store the insight using claude-mem MCP tools:
-- Type: discovery
-- Title: "Learned: [Topic Title]"
-- Content: Full insight content
 ```
 
 ---
@@ -210,9 +254,9 @@ The actual learning content with:
 ## Example Insights
 
 Browse the repository to see real examples of captured insights:
-- Authentication patterns
-- TypeScript techniques
+- TypeScript techniques (subpath exports, branded types)
 - Cloud architecture decisions
+- Claude Code workflows and tips
 - Testing strategies
 - AI/ML concepts
 
